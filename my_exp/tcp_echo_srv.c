@@ -14,31 +14,32 @@
 #define bprintf(fp, format, ...) \
 	    if(fp == NULL){printf(format, ##__VA_ARGS__);} 	\
 	    else{printf(format, ##__VA_ARGS__);	\
-	    fprintf(fp, format, ##__VA_ARGS__);fflush(fp);}	//后面的输出到文件操作，建议使用这个宏，还可同时在屏幕上显示出来
+	    fprintf(fp, format, ##__VA_ARGS__);fflush(fp);}	
 
-int sig_type = 0, sig_to_exit = 0;
-FILE * fp_res = NULL;	//文件指针
+int sig_type = 0;
+int sig_to_exit = 0;
+FILE * resFP = NULL;	//文件指针
 
 void sig_int(int signo) {	
 	// TODO 记录本次系统信号编号到sig_type中;通过getpid()获取进程ID，按照指导书上的要求打印相关信息，并设置sig_to_exit的值
     sig_type = signo;
     sig_to_exit = 1;
-    bprintf(fp_res, "[srv](%d) SIGINT is coming!\n", getpid());
+    bprintf(resFP, "[srv](%d) SIGINT is coming!\n", getpid());
 }
 
 void sig_pipe(int signo) {	
 	// TODO 记录本次系统信号编号到sig_type中;通过getpid()获取进程ID，按照指导书上的要求打印相关信息，并设置sig_to_exit的值
     sig_type = signo;
-    bprintf(fp_res, "[srv](%d) SIGPIPE is coming!\n", getpid());
+    bprintf(resFP, "[srv](%d) SIGPIPE is coming!\n", getpid());
 }
 
 void sig_chld(int signo){
     sig_type = signo;
     pid_t pid = getpid(), pid_chld = 0;
     int stat;
-    bprintf(fp_res, "[cli](%d) SIGCHLD is coming!\n", pid);
+    bprintf(resFP, "[cli](%d) SIGCHLD is coming!\n", pid);
     while((pid_chld = waitpid(-1, &stat, WNOHANG)) > 0)
-        bprintf(fp_res, "[cli](%d) client child(%d) terminated!.\n", pid, pid_chld);
+        bprintf(resFP, "[cli](%d) client child(%d) terminated!.\n", pid, pid_chld);
 }
 
 
@@ -106,7 +107,7 @@ int echo_rep(int sockfd)
 			res = read(sockfd, &pin_n, sizeof(pin_n));
 						
 			if(res < 0){
-				bprintf(fp_res, "[srv](%d) read pin_n return %d and errno is %d!\n", pid, res, errno);
+				bprintf(resFP, "[srv](%d) read pin_n return %d and errno is %d!\n", pid, res, errno);
 				if(errno == EINTR){
 					if(sig_type == SIGINT)
 						return pin_h;
@@ -127,7 +128,7 @@ int echo_rep(int sockfd)
 			//TODO 用read读取客户端echo_rqt数据长度（网络字节序）到len_n中:返回值赋给res
 			res = read(sockfd, &len_n, sizeof(len_n));
 			if(res < 0){
-				bprintf(fp_res, "[srv](%d) read len_n return %d and errno is %d\n", pid, res, errno);
+				bprintf(resFP, "[srv](%d) read len_n return %d and errno is %d\n", pid, res, errno);
 				if(errno == EINTR){
 					if(sig_type == SIGINT)
 						return len_h;
@@ -153,7 +154,7 @@ int echo_rep(int sockfd)
 			//TODO 使用read读取客户端数据，返回值赋给res。注意read第2、3个参数，即每次存放的缓冲区的首地址及所需读取的长度如何设定
             res = read(sockfd, &buf[read_amnt]+8, len_to_read);
 			if(res < 0){
-				bprintf(fp_res, "[srv](%d) read data return %d and errno is %d,\n", pid, res, errno);
+				bprintf(resFP, "[srv](%d) read data return %d and errno is %d,\n", pid, res, errno);
 				if(errno == EINTR){
 					if(sig_type == SIGINT){
 						free(buf);
@@ -185,7 +186,7 @@ int echo_rep(int sockfd)
 		}while(1);
 
 		//TODO 解析客户端echo_rqt数据并写入res文件；注意缓冲区起始位置哦
-        bprintf(fp_res, "[echo_rqt](%d) %s\n", pid, buf+8);
+        bprintf(resFP, "[echo_rqt](%d) %s\n", pid, buf+8);
 
 
 		// 将客户端PIN写入PDU缓存（网络字节序）
@@ -220,8 +221,8 @@ int main(int argc, char* argv[])
 	// TODO 调用install_sig_handlers函数，安装信号处理器，包括SIGPIPE，SIGCHLD以及SIGINT；如果返回的不是0，就打印一个出错信息然后返回res值
     if ((res = install_sig_handlers()) != 0) return res;
 	// 打开文件"stu_srv_res_p.txt"，用于后续父进程信息记录；
-	fp_res = fopen("stu_srv_res_p.txt", "wb");
-	if(!fp_res){
+	resFP = fopen("stu_srv_res_p.txt", "wb");
+	if(!resFP){
 		printf("[srv](%d) failed to open file \"stu_srv_res_p.txt\"!\n", pid);
 		return res;
 	}
@@ -241,9 +242,9 @@ int main(int argc, char* argv[])
     srv_addr.sin_addr.s_addr = inet_addr(argv[1]);
     srv_addr.sin_port = htons(atoi(argv[2]));
 
-	//TODO 按题设要求打印服务器端地址server[ip:port]到fp_res文件中，推荐使用inet_ntop();
+	//TODO 按题设要求打印服务器端地址server[ip:port]到resFP文件中，推荐使用inet_ntop();
     inet_ntop(AF_INET, &srv_addr.sin_addr, ip_str, sizeof(ip_str));
-    bprintf(fp_res, "[srv](%d) server[%s:%d] is initializing!\n", pid, ip_str, (int)ntohs(srv_addr.sin_port));
+    bprintf(resFP, "[srv](%d) server[%s:%d] is initializing!\n", pid, ip_str, (int)ntohs(srv_addr.sin_port));
 
 	//TODO 获取Socket监听描述符: listenfd = socket(x,x,x);
     listenfd = socket(PF_INET, SOCK_STREAM, 0);
@@ -266,9 +267,9 @@ int main(int argc, char* argv[])
 			continue;
 		}
 	
-		//TODO 按题设要求打印客户端端地址client[ip:port]到fp_res文件中，推荐使用inet_ntop();
+		//TODO 按题设要求打印客户端端地址client[ip:port]到resFP文件中，推荐使用inet_ntop();
         inet_ntop(AF_INET, &cli_addr.sin_addr, ip_str, sizeof(ip_str));
-        bprintf(fp_res, "[srv](%d) client[%s:%d] is accepted!\n", pid, ip_str, (int)ntohs(cli_addr.sin_port));
+        bprintf(resFP, "[srv](%d) client[%s:%d] is accepted!\n", pid, ip_str, (int)ntohs(cli_addr.sin_port));
 
 		// 派生子进程对接客户端开展业务交互
 		if(!fork()){// 子进程
@@ -277,23 +278,23 @@ int main(int argc, char* argv[])
 			pid = getpid();
 			// 打开res文件，首先基于PID命名，随后在子进程退出前再根据echo_rep()返回的PIN值对文件更名；
 			sprintf(fn_res, "stu_srv_res_%d.txt", pid);
-			fp_res = fopen(fn_res, "wb");// Write only， append at the tail. Open or create a binary file;
-			if(!fp_res){
+			resFP = fopen(fn_res, "wb");// Write only， append at the tail. Open or create a binary file;
+			if(!resFP){
 				printf("[srv](%d) child exits, failed to open file \"stu_srv_res_%d.txt\"!\n", pid, pid);
 				exit(-1);
 			}
 			//TODO 按指导书要求，将文件被打开的提示信息打印到stdout
-            bprintf(fp_res, "[srv](%d) child process is created!\n", pid);
+            bprintf(resFP, "[srv](%d) child process is created!\n", pid);
             printf("[srv](%d) stu_srv_res_%d.txt is opened!\n", pid, pid);
 
 			//TODO 关闭监听描述符，打印提示信息到文件中
             close(listenfd);
-            bprintf(fp_res, "[srv](%d) listenfd is closed!\n", pid);
+            bprintf(resFP, "[srv](%d) listenfd is closed!\n", pid);
 			//TODO 执行业务函数echo_rep（返回客户端PIN到变量pin中，以便用于后面的更名操作）
 			int pin = echo_rep(connfd);
 			
 			if(pin < 0){
-				bprintf(fp_res, "[srv](%d) PIN error!\n", pid);
+				bprintf(resFP, "[srv](%d) PIN error!\n", pid);
 				exit(-1);
 			}
 
@@ -301,18 +302,18 @@ int main(int argc, char* argv[])
 			char fn_res_n[20]={0};
 			sprintf(fn_res_n, "stu_srv_res_%d.txt", pin);
 			if(!rename(fn_res, fn_res_n)){
-				bprintf(fp_res, "[srv](%d) res file rename done!\n", pid);
+				bprintf(resFP, "[srv](%d) res file rename done!\n", pid);
 			}
 			else{			
-				bprintf(fp_res, "[srv](%d) child exits, res file rename failed!\n", pid);
+				bprintf(resFP, "[srv](%d) child exits, res file rename failed!\n", pid);
 			}
 
 			//TODO 关闭连接描述符，输出信息到res文件中
             close(connfd);
-            bprintf(fp_res, "[srv](%d) connfd is closed!\n", pid);
-            bprintf(fp_res, "[srv](%d) child process is going to exit!\n", pid);
+            bprintf(resFP, "[srv](%d) connfd is closed!\n", pid);
+            bprintf(resFP, "[srv](%d) child process is going to exit!\n", pid);
 			//TODO 关闭子进程res文件,并按指导书要求打印提示信息到stdout,然后exit
-            if(!fclose(fp_res)) printf("[srv](%d) stu_srv_res_%d.txt is closed!\n", pid, pin);
+            if(!fclose(resFP)) printf("[srv](%d) stu_srv_res_%d.txt is closed!\n", pid, pin);
             exit(1);
 		}
 		else{// 父进程		
@@ -324,10 +325,10 @@ int main(int argc, char* argv[])
 
 	//TODO 关闭监听描述符
     close(listenfd);
-	bprintf(fp_res, "[srv](%d) listenfd is closed!\n", pid);
-	bprintf(fp_res, "[srv](%d) parent process is going to exit!\n", pid);
+	bprintf(resFP, "[srv](%d) listenfd is closed!\n", pid);
+	bprintf(resFP, "[srv](%d) parent process is going to exit!\n", pid);
 	
 	//TODO 关闭父进程res文件,并按指导书要求打印提示信息至stdout
-    if(!fclose(fp_res)) printf("[srv](%d) stu_srv_res_p.txt is closed!\n", pid);
+    if(!fclose(resFP)) printf("[srv](%d) stu_srv_res_p.txt is closed!\n", pid);
 	return 0;
 }
