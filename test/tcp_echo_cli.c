@@ -69,16 +69,14 @@ int main(int argc, char* argv[]){
 				printf("[cli](%d) child exits, failed to open file \"stu_cli_res_%d.txt\"!\n", pid, pin);
 				exit(-1);
 			}
-            //bprintf(resFP, "[cli](%d) child process %d is created!\n",pid, pin);
+            bprintf(resFP, "[cli](%d) child process %d is created!\n",pid, pin);
             while((connfd = socket(PF_INET, SOCK_STREAM, 0)) == -1);
 			while (1 == 1){
 				int res;
 				res = connect(connfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
 				if(!res){
 					char ipString[20]={0};	//用于IP地址转换
-                    //bprintf(resFP, "[cli](%d) server[%s:%d] is connected!\n", pid, \
-						inet_ntop(AF_INET, &serverAddress.sin_addr, ipString, sizeof(ipString)), \
-						ntohs(serverAddress.sin_port));
+                    bprintf(resFP, "[cli](%d) server[%s:%d] is connected!\n", pid, inet_ntop(AF_INET, &serverAddress.sin_addr, ipString, sizeof(ipString)), ntohs(serverAddress.sin_port));
 					if(echo_rqt(connfd, pin) == 0)break;
 				}
 				else

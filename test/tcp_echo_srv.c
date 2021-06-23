@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     serverAddress.sin_addr.s_addr = inet_addr(argv[1]);
     serverAddress.sin_port = htons(atoi(argv[2]));
     inet_ntop(AF_INET, &serverAddress.sin_addr, IPaddress, sizeof(IPaddress));
-    //bprintf(resFP, "[srv](%d) server[%s:%d] is initializing!\n", pid, IPaddress, (int)ntohs(serverAddress.sin_port));
+    bprintf(resFP, "[srv](%d) server[%s:%d] is initializing!\n", pid, IPaddress, (int)ntohs(serverAddress.sin_port));
     fdListen = socket(PF_INET, SOCK_STREAM, 0);
     if (fdListen < 0) return 0;
     r = bind(fdListen, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
@@ -81,10 +81,10 @@ int main(int argc, char* argv[]){
 				printf("[srv](%d) child exits, failed to open file \"stu_srv_res_%d.txt\"!\n", pid, pid);
 				exit(-1);
 			}
-            //bprintf(resFP, "[srv](%d) child process is created!\n", pid);
+            bprintf(resFP, "[srv](%d) child process is created!\n", pid);
             printf("[srv](%d) stu_srv_res_%d.txt is opened!\n", pid, pid);
             close(fdListen);
-            //bprintf(resFP, "[srv](%d) fdListen is closed!\n", pid);
+            bprintf(resFP, "[srv](%d) fdListen is closed!\n", pid);
 			int pin;
 			initInt(&pin, echo_rep(fdConnection));
 			
