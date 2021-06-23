@@ -84,8 +84,8 @@ int main(int argc, char* argv[]){
 			}
 
 			close(connfd);
-			//bprintf(resFP, "[cli](%d) connfd is closed!\n", pid);
-			//bprintf(resFP, "[cli](%d) child process is going to exit!\n", pid);
+			bprintf(resFP, "[cli](%d) connfd is closed!\n", pid);
+			bprintf(resFP, "[cli](%d) child process is going to exit!\n", pid);
             if(resFP){
                 if(!fclose(resFP))
                     printf("[cli](%d) stu_cli_res_%d.txt is closed!\n", pid, pin);
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
 		res = connect(connfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
 		if(res == 0){
 			char ipString[20]={0};
-            //bprintf(resFP, "[cli](%d) server[%s:%d] is connected!\n", pid, inet_ntop(AF_INET, &serverAddress.sin_addr, ipString, sizeof(ipString)), ntohs(serverAddress.sin_port));
+            bprintf(resFP, "[cli](%d) server[%s:%d] is connected!\n", pid, inet_ntop(AF_INET, &serverAddress.sin_addr, ipString, sizeof(ipString)), ntohs(serverAddress.sin_port));
 			if(echo_rqt(connfd, 0) == 0)
 				break;
 		}
@@ -118,8 +118,8 @@ int main(int argc, char* argv[]){
 			break;	
 	}
     close(connfd);
-	//bprintf(resFP, "[cli](%d) connfd is closed!\n", pid);
-	//bprintf(resFP, "[cli](%d) parent process is going to exit!\n", pid);
+	bprintf(resFP, "[cli](%d) connfd is closed!\n", pid);
+	bprintf(resFP, "[cli](%d) parent process is going to exit!\n", pid);
     if(fclose(resFP)) return 0;
 	printf("[cli](%d) stu_cli_res_0.txt is closed!\n", pid);
 	return 0;
@@ -131,7 +131,7 @@ void initInt(int *a, int b){
 void sig_pipe(int SigNumber) {
 	pid_t p = getpid();
     SigType = SigNumber;
-    //bprintf(resFP, "[srv](%d) SIGPIPE is coming!\n", p);
+    bprintf(resFP, "[srv](%d) SIGPIPE is coming!\n", p);
 }
 
 void chld(int SigNumber){
@@ -139,7 +139,7 @@ void chld(int SigNumber){
     pid_t pid = getpid();
 	pid_t chldPid = 0;
     int status;
-    //bprintf(resFP, "[cli](%d) SIGCHLD is coming!\n", pid);
+    bprintf(resFP, "[cli](%d) SIGCHLD is coming!\n", pid);
 
     while ((chldPid = waitpid(-1, &status, WNOHANG)) > 0)
         printf("[srv](%d) server child(%d) terminated.", pid, chldPid);
@@ -164,7 +164,7 @@ int echo_rqt(int sockfd, int pin){
 	sprintf(fn_td, "td%d.txt", pin);
 	FILE * fp_td = fopen(fn_td, "r");
 	if(!fp_td){
-		//bprintf(resFP, "[cli](%d) Test data read error!\n", hPin);
+		bprintf(resFP, "[cli](%d) Test data read error!\n", hPin);
 		return 0;
 	}
 
@@ -187,7 +187,7 @@ int echo_rqt(int sockfd, int pin){
         read(sockfd, &lenthOfN, 4);
         lenthOfH = ntohl(lenthOfN);
         read(sockfd, buffer, ntohl(lenthOfN));
-        //bprintf(resFP, "[echo_rep](%d) %s\n", pid, buffer);
+        bprintf(resFP, "[echo_rep](%d) %s\n", pid, buffer);
     }
 	return 0;
 }

@@ -95,14 +95,14 @@ int main(int argc, char* argv[]){
 			char FnResult_n[20]={0};
 			sprintf(FnResult_n, "stu_srv_res_%d.txt", pin);
 			if(!rename(FnResult, FnResult_n)){
-				//bprintf(resFP, "[srv](%d) res file rename done!\n", pid);
+				bprintf(resFP, "[srv](%d) res file rename done!\n", pid);
 			}
 			else{			
-				//bprintf(resFP, "[srv](%d) child exits, res file rename failed!\n", pid);
+				bprintf(resFP, "[srv](%d) child exits, res file rename failed!\n", pid);
 			}
             close(fdConnection);
-            //bprintf(resFP, "[srv](%d) fdConnection is closed!\n", pid);
-            //bprintf(resFP, "[srv](%d) child process is going to exit!\n", pid);
+            bprintf(resFP, "[srv](%d) fdConnection is closed!\n", pid);
+            bprintf(resFP, "[srv](%d) child process is going to exit!\n", pid);
             if(!fclose(resFP)) printf("[srv](%d) stu_srv_res_%d.txt is closed!\n", pid, pin);
             exit(1);
 		}
@@ -112,8 +112,8 @@ int main(int argc, char* argv[]){
 		}
 	}
     close(fdListen);
-	//bprintf(resFP, "[srv](%d) fdListen is closed!\n", pid);
-	//bprintf(resFP, "[srv](%d) parent process is going to exit!\n", pid);
+	bprintf(resFP, "[srv](%d) fdListen is closed!\n", pid);
+	bprintf(resFP, "[srv](%d) parent process is going to exit!\n", pid);
     if(!fclose(resFP))return 0;
 	printf("[srv](%d) stu_srv_res_p.txt is closed!\n", pid);
 	return 0;
@@ -122,11 +122,11 @@ int main(int argc, char* argv[]){
 void sig_int(int SigNumber) {	
     SigExit = 1;
     SigType = SigNumber;
-    //bprintf(resFP, "[srv](%d) SIGINT is coming!\n", getpid());
+    bprintf(resFP, "[srv](%d) SIGINT is coming!\n", getpid());
 }
 void sig_pipe(int SigNumber) {	
     SigType = SigNumber;
-    //bprintf(resFP, "[srv](%d) SIGPIPE is coming!\n", getpid());
+    bprintf(resFP, "[srv](%d) SIGPIPE is coming!\n", getpid());
 }
 void initInt(int *a, int b){
 	*a = b;
@@ -136,7 +136,7 @@ void chld(int SigNumber){
     pid_t pid = getpid();
 	pid_t chldPid = 0;
     int s;
-    //bprintf(resFP, "[cli](%d) SIGCHLD is coming!\n", pid);
+    bprintf(resFP, "[cli](%d) SIGCHLD is coming!\n", pid);
     while((chldPid = waitpid(-1, &s, WNOHANG)) > 0)
         bprintf(resFP, "[cli](%d) client child(%d) terminated!.\n", pid, chldPid);
 }
@@ -186,7 +186,7 @@ int echo_rep(int sockfd){
 		while(1>0){
 			r = read(sockfd, &nPin, sizeof(nPin));
 			if(r < 0){
-				//bprintf(resFP, "[srv](%d) read pin_n return %d and errno is %d!\n", pid, r, errno);
+				bprintf(resFP, "[srv](%d) read pin_n return %d and errno is %d!\n", pid, r, errno);
 				if(errno == EINTR){
 					if(SigType == SIGINT)
 						return hPin;
@@ -204,7 +204,7 @@ int echo_rep(int sockfd){
 		while(1>0){
 			r = read(sockfd, &lenthOfN, sizeof(lenthOfN));
 			if(r < 0){
-				//bprintf(resFP, "[srv](%d) read len_n return %d and errno is %d\n", pid, r, errno);
+				bprintf(resFP, "[srv](%d) read len_n return %d and errno is %d\n", pid, r, errno);
 				if(errno == EINTR){
 					if(SigType == SIGINT)
 						return lenthOfH;
@@ -229,7 +229,7 @@ int echo_rep(int sockfd){
 		while(1>0){
             r = read(sockfd, &echoRepBuffer[readAmount]+8, lenthToRead);
 			if(r < 0){
-				//bprintf(resFP, "[srv](%d) read data return %d and errno is %d,\n", pid, r, errno);
+				bprintf(resFP, "[srv](%d) read data return %d and errno is %d,\n", pid, r, errno);
 				if(errno == EINTR){
 					if(SigType == SIGINT){
 						free(echoRepBuffer);
@@ -253,7 +253,7 @@ int echo_rep(int sockfd){
                 return hPin;
             }
 		}
-        //bprintf(resFP, "[echo_rqt](%d) %s\n", pid, echoRepBuffer+8);
+        bprintf(resFP, "[echo_rqt](%d) %s\n", pid, echoRepBuffer+8);
 		memcpy(echoRepBuffer, &nPin, 4);
 		memcpy(echoRepBuffer+4, &lenthOfN, 4);
         write(sockfd, echoRepBuffer, lenthOfH+8);
